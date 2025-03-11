@@ -1,0 +1,18 @@
+{
+  "Mars": {
+    "transit_time": ["6 months", "7 months", "8 months", "9 months"],
+    "activities": {
+      "Tourist": ["Explore Olympus Mons", "Visit Valles Marineris", "Experience Martian gravity", "Tour the Martian colonies"],
+      "Scientist": ["Conduct soil analysis", "Study Martian weather patterns", "Search for signs of past life", "Test new space technologies"]
+    },
+    "launch_vehicles": ["Starship", "New Glenn", "Vulcan Centaur"]
+  },
+  "Moon": {
+    "transit_time": ["3 days", "4 days"],
+    "activities": {
+      "Tourist": ["Walk on the lunar surface", "Visit Apollo landing sites", "Experience lunar gravity", "View Earth from the Moon"],
+      "Scientist": ["Collect lunar rock samples", "Study lunar geology", "Test lunar habitat designs", "Observe celestial phenomena"]
+    },
+    "launch_vehicles": ["Starship", "Falcon Heavy", "SLS"]
+  }
+}
