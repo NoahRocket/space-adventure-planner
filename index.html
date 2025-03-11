@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Adventure Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <h1>Plan Your Space Adventure</h1>
-    <form method="POST">
+    <form id="tripForm">
         <label for="destination">Choose your destination:</label>
         <select name="destination" id="destination">
             <option value="Mars">Mars</option>
@@ -25,12 +25,47 @@
         <button type="submit">Plan My Trip</button>
     </form>
     
-    {% if itinerary %}
-        <div class="itinerary">
-            {{ itinerary | safe }}
-        </div>
-    {% endif %}
+    <div id="itinerary" class="itinerary"></div>
     
     <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
+
+    <script>
+        document.getElementById('tripForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const destination = document.getElementById('destination').value;
+            const missionType = document.getElementById('mission_type').value;
+            
+            // Fetch data.json
+            const response = await fetch('data.json');
+            const data = await response.json();
+            
+            // Get data for selected destination
+            const destData = data[destination];
+            
+            // Random selections
+            const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
+            const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
+            const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
+            const activities = destData.activities[missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
+            
+            // Generate itinerary
+            const itinerary = `
+                <h2>Your Space Adventure Itinerary</h2>
+                <p><strong>Destination:</strong> ${destination}</p>
+                <p><strong>Mission Type:</strong> ${missionType}</p>
+                <p><strong>Launch Vehicle:</strong> ${launchVehicle}</p>
+                <p><strong>Launch Year:</strong> ${launchYear}</p>
+                <p><strong>Transit Time:</strong> ${transitTime}</p>
+                <p><strong>Activities:</strong></p>
+                <ul>
+                    <li>${activities[0]}</li>
+                    <li>${activities[1]}</li>
+                </ul>
+            `;
+            
+            document.getElementById('itinerary').innerHTML = itinerary;
+        });
+    </script>
 </body>
 </html>
