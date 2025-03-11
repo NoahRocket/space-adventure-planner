@@ -4,46 +4,131 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Adventure Planner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="three-canvas"></div>
     <div class="container">
         <h1>Plan Your Space Adventure</h1>
-        <form id="tripForm">
-            <div class="form-group">
-                <label for="destination">Choose your destination:</label>
-                <select name="destination" id="destination">
-                    <option value="Mars">Mars</option>
-                    <option value="Moon">Moon</option>
-                </select>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="booking-steps">
+            <div class="step active" data-step="1">
+                <h2>Step 1: Choose Your Destination</h2>
+                <div class="form-group">
+                    <label for="destination">Destination:</label>
+                    <select name="destination" id="destination">
+                        <option value="Mars">Mars</option>
+                        <option value="Moon">Moon</option>
+                    </select>
+                </div>
+                <button type="button" onclick="nextStep(2)">Next</button>
             </div>
-            <div class="form-group">
-                <label for="mission_type">Choose your mission type:</label>
-                <select name="mission_type" id="mission_type">
-                    <option value="Tourist">Tourist</option>
-                    <option value="Scientist">Scientist</option>
-                </select>
+            <div class="step" data-step="2">
+                <h2>Step 2: Mission Details</h2>
+                <div class="form-group">
+                    <label for="mission_type">Mission Type:</label>
+                    <select name="mission_type" id="mission_type">
+                        <option value="Tourist">Tourist</option>
+                        <option value="Scientist">Scientist</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="passengers">Number of Passengers:</label>
+                    <input type="number" id="passengers" min="1" max="10" value="1">
+                </div>
+                <button type="button" onclick="nextStep(3)">Next</button>
+                <button type="button" onclick="prevStep(1)">Back</button>
             </div>
-            <button type="submit">Plan My Trip</button>
-        </form>
-        
-        <div id="itinerary" class="itinerary"></div>
-        
+            <div class="step" data-step="3">
+                <h2>Step 3: Confirm Booking</h2>
+                <div id="itinerary" class="itinerary"></div>
+                <button type="button" onclick="confirmBooking()">Confirm</button>
+                <button type="button" onclick="prevStep(2)">Back</button>
+            </div>
+            <div class="step" data-step="4">
+                <h2>Launch Simulation</h2>
+                <div id="animation-container"></div>
+                <button type="button" onclick="resetBooking()">Plan Another Trip</button>
+            </div>
+        </div>
         <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <script>
-        // Three.js setup
+        let currentStep = 1;
+        let bookingData = {};
+
+        function updateProgress() {
+            const progress = ((currentStep - 1) / 3) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function nextStep(step) {
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+            currentStep = step;
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+            updateProgress();
+        }
+
+        function prevStep(step) {
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
+            currentStep = step;
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+            updateProgress();
+        }
+
+        async function confirmBooking() {
+            bookingData.destination = document.getElementById('destination').value;
+            bookingData.missionType = document.getElementById('mission_type').value;
+            bookingData.passengers = document.getElementById('passengers').value;
+
+            const response = await fetch('data.json');
+            const data = await response.json();
+            const destData = data[bookingData.destination];
+
+            const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
+            const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
+            const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
+            const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
+
+            const itinerary = `
+                <h3>Booking Details</h3>
+                <p><strong>Destination:</strong> ${bookingData.destination}</p>
+                <p><strong>Mission Type:</strong> ${bookingData.missionType}</p>
+                <p><strong>Passengers:</strong> ${bookingData.passengers}</p>
+                <p><strong>Launch Vehicle:</strong> ${launchVehicle}</p>
+                <p><strong>Launch Year:</strong> ${launchYear}</p>
+                <p><strong>Transit Time:</strong> ${transitTime}</p>
+                <p><strong>Activities:</strong></p>
+                <ul>
+                    <li>${activities[0]}</li>
+                    <li>${activities[1]}</li>
+                </ul>
+            `;
+            document.getElementById('itinerary').innerHTML = itinerary;
+            nextStep(4);
+        }
+
+        function resetBooking() {
+            document.getElementById('itinerary').innerHTML = '';
+            document.getElementById('animation-container').innerHTML = '';
+            currentStep = 1;
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            document.querySelector('.step[data-step="1"]').classList.add('active');
+            updateProgress();
+        }
+
+        // Three.js Setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('three-canvas').appendChild(renderer.domElement);
 
-        // Add stars
         const starGeometry = new THREE.BufferGeometry();
         const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
         const starVertices = [];
@@ -57,9 +142,8 @@
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);
 
-        // Add a planet (sphere)
         const planetGeometry = new THREE.SphereGeometry(5, 32, 32);
-        const planetMaterial = new THREE.MeshBasicMaterial({ color: 0xff4500 }); // Mars-like color
+        const planetMaterial = new THREE.MeshBasicMaterial({ color: 0xff4500 });
         const planet = new THREE.Mesh(planetGeometry, planetMaterial);
         planet.position.set(20, 0, -30);
         scene.add(planet);
@@ -74,49 +158,54 @@
         }
         animate();
 
-        // Handle window resize
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Form submission
-        document.getElementById('tripForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            
-            const destination = document.getElementById('destination').value;
-            const missionType = document.getElementById('mission_type').value;
-            
-            const response = await fetch('data.json');
-            const data = await response.json();
-            
-            const destData = data[destination];
-            
-            const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
-            const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
-            const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
-            const activities = destData.activities[missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
-            
-            const itinerary = `
-                <h2>Your Space Adventure Itinerary</h2>
-                <p><strong>Destination:</strong> ${destination}</p>
-                <p><strong>Mission Type:</strong> ${missionType}</p>
-                <p><strong>Launch Vehicle:</strong> ${launchVehicle}</p>
-                <p><strong>Launch Year:</strong> ${launchYear}</p>
-                <p><strong>Transit Time:</strong> ${transitTime}</p>
-                <p><strong>Activities:</strong></p>
-                <ul>
-                    <li>${activities[0]}</li>
-                    <li>${activities[1]}</li>
-                </ul>
-            `;
-            
-            document.getElementById('itinerary').innerHTML = itinerary;
+        // Spaceship Animation
+        function launchAnimation() {
+            const animationContainer = document.getElementById('animation-container');
+            const animationRenderer = new THREE.WebGLRenderer({ alpha: true });
+            animationRenderer.setSize(400, 300);
+            animationContainer.appendChild(animationRenderer.domElement);
+
+            const animationScene = new THREE.Scene();
+            const animationCamera = new THREE.PerspectiveCamera(75, 400 / 300, 0.1, 1000);
+            animationCamera.position.z = 50;
+
+            const spaceshipGeometry = new THREE.ConeGeometry(2, 5, 32);
+            const spaceshipMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const spaceship = new THREE.Mesh(spaceshipGeometry, spaceshipMaterial);
+            spaceship.position.set(-40, 0, 0);
+            animationScene.add(spaceship);
+
+            const targetPlanet = new THREE.Mesh(planetGeometry, planetMaterial);
+            targetPlanet.position.set(40, 0, 0);
+            animationScene.add(targetPlanet);
+
+            let animationProgress = 0;
+            function animateLaunch() {
+                requestAnimationFrame(animateLaunch);
+                animationProgress += 0.01;
+                if (animationProgress < 1) {
+                    spaceship.position.x = -40 + (80 * animationProgress);
+                    animationCamera.position.x = -40 + (80 * animationProgress);
+                    animationCamera.lookAt(spaceship.position);
+                }
+                animationRenderer.render(animationScene, animationCamera);
+            }
+            animateLaunch();
 
             // Update planet color based on destination
-            planetMaterial.color.set(destination === "Mars" ? 0xff4500 : 0xaaaaaa);
-        });
+            targetPlanet.material.color.set(bookingData.destination === "Mars" ? 0xff4500 : 0xaaaaaa);
+        }
+
+        // Trigger animation after booking
+        if (currentStep === 4) {
+            launchAnimation();
+        }
     </script>
 </body>
 </html>
