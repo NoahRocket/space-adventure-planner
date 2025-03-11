@@ -8,48 +8,96 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Plan Your Space Adventure</h1>
-    <form id="tripForm">
-        <label for="destination">Choose your destination:</label>
-        <select name="destination" id="destination">
-            <option value="Mars">Mars</option>
-            <option value="Moon">Moon</option>
-        </select>
-        <br>
-        <label for="mission_type">Choose your mission type:</label>
-        <select name="mission_type" id="mission_type">
-            <option value="Tourist">Tourist</option>
-            <option value="Scientist">Scientist</option>
-        </select>
-        <br>
-        <button type="submit">Plan My Trip</button>
-    </form>
-    
-    <div id="itinerary" class="itinerary"></div>
-    
-    <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
+    <div id="three-canvas"></div>
+    <div class="container">
+        <h1>Plan Your Space Adventure</h1>
+        <form id="tripForm">
+            <div class="form-group">
+                <label for="destination">Choose your destination:</label>
+                <select name="destination" id="destination">
+                    <option value="Mars">Mars</option>
+                    <option value="Moon">Moon</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mission_type">Choose your mission type:</label>
+                <select name="mission_type" id="mission_type">
+                    <option value="Tourist">Tourist</option>
+                    <option value="Scientist">Scientist</option>
+                </select>
+            </div>
+            <button type="submit">Plan My Trip</button>
+        </form>
+        
+        <div id="itinerary" class="itinerary"></div>
+        
+        <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <script>
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('three-canvas').appendChild(renderer.domElement);
+
+        // Add stars
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
+        const starVertices = [];
+        for (let i = 0; i < 1000; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = (Math.random() - 0.5) * 2000;
+            starVertices.push(x, y, z);
+        }
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Add a planet (sphere)
+        const planetGeometry = new THREE.SphereGeometry(5, 32, 32);
+        const planetMaterial = new THREE.MeshBasicMaterial({ color: 0xff4500 }); // Mars-like color
+        const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+        planet.position.set(20, 0, -30);
+        scene.add(planet);
+
+        camera.position.z = 50;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            planet.rotation.y += 0.01;
+            stars.rotation.y += 0.001;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Form submission
         document.getElementById('tripForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
             const destination = document.getElementById('destination').value;
             const missionType = document.getElementById('mission_type').value;
             
-            // Fetch data.json
             const response = await fetch('data.json');
             const data = await response.json();
             
-            // Get data for selected destination
             const destData = data[destination];
             
-            // Random selections
             const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
             const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
             const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
             const activities = destData.activities[missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
             
-            // Generate itinerary
             const itinerary = `
                 <h2>Your Space Adventure Itinerary</h2>
                 <p><strong>Destination:</strong> ${destination}</p>
@@ -65,6 +113,9 @@
             `;
             
             document.getElementById('itinerary').innerHTML = itinerary;
+
+            // Update planet color based on destination
+            planetMaterial.color.set(destination === "Mars" ? 0xff4500 : 0xaaaaaa);
         });
     </script>
 </body>
