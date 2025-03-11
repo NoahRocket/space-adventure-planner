@@ -68,6 +68,7 @@
         }
 
         function nextStep(step) {
+            console.log("Switching to step:", step); // Debug log
             document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
             currentStep = step;
             document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
@@ -198,11 +199,9 @@
             }
             animateLaunch();
 
-            // Update planet color based on destination
             targetPlanet.material.color.set(bookingData.destination === "Mars" ? 0xff4500 : 0xaaaaaa);
         }
 
-        // Trigger animation after booking
         if (currentStep === 4) {
             launchAnimation();
         }
