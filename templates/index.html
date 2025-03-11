@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Adventure Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Plan Your Space Adventure</h1>
+    <form method="POST">
+        <label for="destination">Choose your destination:</label>
+        <select name="destination" id="destination">
+            <option value="Mars">Mars</option>
+            <option value="Moon">Moon</option>
+        </select>
+        <br>
+        <label for="mission_type">Choose your mission type:</label>
+        <select name="mission_type" id="mission_type">
+            <option value="Tourist">Tourist</option>
+            <option value="Scientist">Scientist</option>
+        </select>
+        <br>
+        <button type="submit">Plan My Trip</button>
+    </form>
+    
+    {% if itinerary %}
+        <div class="itinerary">
+            {{ itinerary | safe }}
+        </div>
+    {% endif %}
+    
+    <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
+</body>
+</html>
