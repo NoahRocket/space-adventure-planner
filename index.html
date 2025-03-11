@@ -11,119 +11,40 @@
     <div id="three-canvas"></div>
     <div class="container">
         <h1>Plan Your Space Adventure</h1>
-        <div class="progress-bar">
-            <div class="progress" id="progress"></div>
-        </div>
-        <div class="booking-steps">
-            <div class="step active" data-step="1">
-                <h2>Step 1: Choose Your Destination</h2>
-                <div class="form-group">
-                    <label for="destination">Destination:</label>
-                    <select name="destination" id="destination">
-                        <option value="Mars">Mars</option>
-                        <option value="Moon">Moon</option>
-                    </select>
-                </div>
-                <button type="button" onclick="nextStep(2)">Next</button>
+        <form id="tripForm">
+            <div class="form-group">
+                <label for="destination">Choose your destination:</label>
+                <select name="destination" id="destination">
+                    <option value="Mars">Mars</option>
+                    <option value="Moon">Moon</option>
+                </select>
             </div>
-            <div class="step" data-step="2">
-                <h2>Step 2: Mission Details</h2>
-                <div class="form-group">
-                    <label for="mission_type">Mission Type:</label>
-                    <select name="mission_type" id="mission_type">
-                        <option value="Tourist">Tourist</option>
-                        <option value="Scientist">Scientist</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="passengers">Number of Passengers:</label>
-                    <input type="number" id="passengers" min="1" max="10" value="1">
-                </div>
-                <button type="button" onclick="nextStep(3)">Next</button>
-                <button type="button" onclick="prevStep(1)">Back</button>
+            <div class="form-group">
+                <label for="mission_type">Choose your mission type:</label>
+                <select name="mission_type" id="mission_type">
+                    <option value="Tourist">Tourist</option>
+                    <option value="Scientist">Scientist</option>
+                </select>
             </div>
-            <div class="step" data-step="3">
-                <h2>Step 3: Confirm Booking</h2>
-                <div id="itinerary" class="itinerary"></div>
-                <button type="button" onclick="confirmBooking()">Confirm</button>
-                <button type="button" onclick="prevStep(2)">Back</button>
+            <div class="form-group">
+                <label for="passengers">Number of Passengers:</label>
+                <input type="number" id="passengers" min="1" max="10" value="1">
             </div>
-            <div class="step" data-step="4">
-                <h2>Launch Simulation</h2>
-                <div id="animation-container"></div>
-                <button type="button" onclick="resetBooking()">Plan Another Trip</button>
-            </div>
-        </div>
+            <button type="submit">Plan My Trip</button>
+        </form>
+        
+        <div id="itinerary" class="itinerary"></div>
+        <div id="launch-button" class="launch-button"></div>
+        <div id="animation-container"></div>
+        
         <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <script>
-        let currentStep = 1;
         let bookingData = {};
 
-        function updateProgress() {
-            const progress = ((currentStep - 1) / 3) * 100;
-            document.getElementById('progress').style.width = `${progress}%`;
-        }
-
-        function nextStep(step) {
-            console.log("Switching to step:", step); // Debug log
-            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
-            currentStep = step;
-            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
-            updateProgress();
-        }
-
-        function prevStep(step) {
-            document.querySelector(`.step[data-step="${currentStep}"]`).classList.remove('active');
-            currentStep = step;
-            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
-            updateProgress();
-        }
-
-        async function confirmBooking() {
-            bookingData.destination = document.getElementById('destination').value;
-            bookingData.missionType = document.getElementById('mission_type').value;
-            bookingData.passengers = document.getElementById('passengers').value;
-
-            const response = await fetch('data.json');
-            const data = await response.json();
-            const destData = data[bookingData.destination];
-
-            const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
-            const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
-            const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
-            const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
-
-            const itinerary = `
-                <h3>Booking Details</h3>
-                <p><strong>Destination:</strong> ${bookingData.destination}</p>
-                <p><strong>Mission Type:</strong> ${bookingData.missionType}</p>
-                <p><strong>Passengers:</strong> ${bookingData.passengers}</p>
-                <p><strong>Launch Vehicle:</strong> ${launchVehicle}</p>
-                <p><strong>Launch Year:</strong> ${launchYear}</p>
-                <p><strong>Transit Time:</strong> ${transitTime}</p>
-                <p><strong>Activities:</strong></p>
-                <ul>
-                    <li>${activities[0]}</li>
-                    <li>${activities[1]}</li>
-                </ul>
-            `;
-            document.getElementById('itinerary').innerHTML = itinerary;
-            nextStep(4);
-        }
-
-        function resetBooking() {
-            document.getElementById('itinerary').innerHTML = '';
-            document.getElementById('animation-container').innerHTML = '';
-            currentStep = 1;
-            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
-            document.querySelector('.step[data-step="1"]').classList.add('active');
-            updateProgress();
-        }
-
-        // Three.js Setup
+        // Three.js Background Setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true });
@@ -165,9 +86,49 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // Form Submission
+        document.getElementById('tripForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            bookingData.destination = document.getElementById('destination').value;
+            bookingData.missionType = document.getElementById('mission_type').value;
+            bookingData.passengers = document.getElementById('passengers').value;
+            
+            const response = await fetch('data.json');
+            const data = await response.json();
+            const destData = data[bookingData.destination];
+            
+            const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
+            const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
+            const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
+            const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
+            
+            const itinerary = `
+                <h2>Your Space Adventure Itinerary</h2>
+                <p><strong>Destination:</strong> ${bookingData.destination}</p>
+                <p><strong>Mission Type:</strong> ${bookingData.missionType}</p>
+                <p><strong>Passengers:</strong> ${bookingData.passengers}</p>
+                <p><strong>Launch Vehicle:</strong> ${launchVehicle}</p>
+                <p><strong>Launch Year:</strong> ${launchYear}</p>
+                <p><strong>Transit Time:</strong> ${transitTime}</p>
+                <p><strong>Activities:</strong></p>
+                <ul>
+                    <li>${activities[0]}</li>
+                    <li>${activities[1]}</li>
+                </ul>
+            `;
+            
+            document.getElementById('itinerary').innerHTML = itinerary;
+            document.getElementById('launch-button').innerHTML = '<button onclick="launchAnimation()">Launch Simulation</button>';
+
+            // Update planet color based on destination
+            planetMaterial.color.set(bookingData.destination === "Mars" ? 0xff4500 : 0xaaaaaa);
+        });
+
         // Spaceship Animation
         function launchAnimation() {
             const animationContainer = document.getElementById('animation-container');
+            animationContainer.innerHTML = ''; // Clear previous animation
             const animationRenderer = new THREE.WebGLRenderer({ alpha: true });
             animationRenderer.setSize(400, 300);
             animationContainer.appendChild(animationRenderer.domElement);
@@ -200,10 +161,6 @@
             animateLaunch();
 
             targetPlanet.material.color.set(bookingData.destination === "Mars" ? 0xff4500 : 0xaaaaaa);
-        }
-
-        if (currentStep === 4) {
-            launchAnimation();
         }
     </script>
 </body>
