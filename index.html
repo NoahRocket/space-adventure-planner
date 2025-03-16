@@ -58,7 +58,7 @@
         const starGeometry = new THREE.BufferGeometry();
         const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
         const starVertices = [];
-        for (let i = 0; i = 0; i < 1000; i++) {
+        for (let i = 0; i < 1000; i++) {
             const x = (Math.random() - 0.5) * 2000;
             const y = (Math.random() - 0.5) * 2000;
             const z = (Math.random() - 0.5) * 2000;
@@ -76,13 +76,13 @@
 
         camera.position.z = 50;
 
-        function animate() {
-            requestAnimationFrame(animate);
+        function animateBackground() {
+            requestAnimationFrame(animateBackground);
             planet.rotation.y += 0.01;
             stars.rotation.y += 0.001;
             renderer.render(scene, camera);
         }
-        animate();
+        animateBackground();
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
@@ -98,37 +98,51 @@
             bookingData.missionType = document.getElementById('mission_type').value;
             bookingData.passengers = document.getElementById('passengers').value;
             
-            const response = await fetch('data.json');
-            const data = await response.json();
-            const destData = data[bookingData.destination];
-            
-            const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
-            const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
-            const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
-            const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
-            
-            // Draw Ticket
-            const canvas = document.getElementById('ticket-canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#00bfff';
-            ctx.font = 'bold 20px Montserrat';
-            ctx.fillText(`Space Ticket: ${bookingData.destination}`, 20, 30);
-            ctx.font = '16px Montserrat';
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(`Mission: ${bookingData.missionType}`, 20, 60);
-            ctx.fillText(`Passengers: ${bookingData.passengers}`, 20, 90);
-            ctx.fillText(`Vehicle: ${launchVehicle}`, 20, 120);
-            ctx.fillText(`Launch: ${launchYear}`, 20, 150);
-            ctx.fillText(`Transit: ${transitTime}`, 20, 180);
-            ctx.fillText(`Activity: ${activities[0]}`, 220, 60);
-            ctx.fillText(`Activity: ${activities[1]}`, 220, 90);
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Failed to load data.json');
+                const data = await response.json();
+                const destData = data[bookingData.destination];
+                
+                const launchVehicle = destData.launch_vehicles[Math.floor(Math.random() * destData.launch_vehicles.length)];
+                const launchYear = ["2028", "2029", "2030"][Math.floor(Math.random() * 3)];
+                const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
+                const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
+                
+                // Draw Ticket
+                const canvas = document.getElementById('ticket-canvas');
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('Canvas context is null');
+                    return;
+                }
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = '#00bfff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height); // Blue border
+                ctx.fillStyle = '#00bfff';
+                ctx.font = 'bold 20px Montserrat';
+                ctx.fillText(`Space Ticket: ${bookingData.destination}`, 20, 30);
+                ctx.font = '16px Montserrat';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`Mission: ${bookingData.missionType}`, 20, 60);
+                ctx.fillText(`Passengers: ${bookingData.passengers}`, 20, 90);
+                ctx.fillText(`Vehicle: ${launchVehicle}`, 20, 120);
+                ctx.fillText(`Launch: ${launchYear}`, 20, 150);
+                ctx.fillText(`Transit: ${transitTime}`, 20, 180);
+                ctx.fillText(`Activity: ${activities[0]}`, 220, 60);
+                ctx.fillText(`Activity: ${activities[1]}`, 220, 90);
 
-            document.getElementById('launch-button').innerHTML = '<button onclick="launchAnimation()">Launch Simulation</button>';
+                document.getElementById('launch-button').innerHTML = '<button onclick="launchAnimation()">Launch Simulation</button>';
 
-            // Update planet color based on destination
-            planetMaterial.color.set(bookingData.destination.includes("Mars") ? 0xff4500 : 0xaaaaaa);
+                // Update planet color based on destination
+                planetMaterial.color.set(bookingData.destination.includes("Mars") ? 0xff4500 : 0xaaaaaa);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('ticket-container').innerHTML = '<p>Error loading trip details. Please try again!</p>';
+            }
         });
 
         // Spaceship Animation
@@ -143,14 +157,12 @@
             const animationCamera = new THREE.PerspectiveCamera(75, 600 / 400, 0.1, 1000);
             animationCamera.position.set(0, 20, 50);
 
-            // Starship-like spaceship
             const spaceshipBody = new THREE.CylinderGeometry(2, 2, 10, 32);
             const spaceshipMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
             const spaceship = new THREE.Mesh(spaceshipBody, spaceshipMaterial);
             spaceship.position.set(-40, 0, 0);
             animationScene.add(spaceship);
 
-            // Exhaust effect
             const exhaustGeometry = new THREE.ConeGeometry(1, 5, 32);
             const exhaustMaterial = new THREE.MeshBasicMaterial({ color: 0xff4500 });
             const exhaust = new THREE.Mesh(exhaustGeometry, exhaustMaterial);
