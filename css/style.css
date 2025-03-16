@@ -71,27 +71,26 @@ button:hover {
     transform: scale(1.05);
 }
 
-.itinerary {
-    background: linear-gradient(45deg, #222, #333);
-    padding: 20px;
-    border-radius: 10px;
+.ticket-container {
     margin-top: 30px;
-    text-align: left;
+    text-align: center;
+}
+
+#ticket-canvas {
+    border: 2px solid #00bfff;
+    border-radius: 10px;
     box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
     animation: fadeIn 1s ease-in;
 }
 
 #animation-container {
     margin-top: 20px;
+    text-align: center;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.itinerary ul {
-    padding-left: 20px;
 }
 
 .launch-button {
