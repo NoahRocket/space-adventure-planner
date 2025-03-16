@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Adventure Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -36,10 +37,8 @@
         </form>
         
         <div id="ticket-container" class="ticket-container">
-            <canvas id="ticket-canvas" width="800" height="300"></canvas>
+            <canvas id="ticket-canvas" width="800" height="400"></canvas>
         </div>
-        <div id="launch-button" class="launch-button"></div>
-        <div id="animation-container"></div>
         
         <p class="disclaimer">This is a simulated space adventure for fun—actual space travel not included!</p>
     </div>
@@ -48,7 +47,7 @@
     <script>
         let bookingData = {};
 
-        // Three.js Background Setup
+        // Three.js Background Setup (unchanged)
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true });
@@ -90,7 +89,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // Form Submission
+        // Form Submission and Ticket Drawing
         document.getElementById('tripForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             
@@ -109,93 +108,71 @@
                 const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
                 const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
                 
-                // Draw Ticket with Background Image
+                // Draw Ticket
                 const canvas = document.getElementById('ticket-canvas');
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const bgImage = new Image();
-                bgImage.src = bookingData.destination.includes("Mars") ? 'mars-bg.jpg' : 'moon-bg.jpg';
-                bgImage.onload = function() {
-                    ctx.globalAlpha = 0.3;
-                    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-                    ctx.globalAlpha = 1.0;
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#00bfff';
-                    ctx.font = 'bold 40px Montserrat';
-                    ctx.fillText(`Space Ticket: ${bookingData.destination}`, 50, 60);
-                    ctx.font = '24px Montserrat';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillText(`Mission: ${bookingData.missionType}`, 50, 100);
-                    ctx.fillText(`Passengers: ${bookingData.passengers}`, 50, 140);
-                    ctx.fillText(`Vehicle: ${launchVehicle}`, 50, 180);
-                    ctx.fillText(`Launch: ${launchYear}`, 50, 220);
-                    ctx.fillText(`Transit: ${transitTime}`, 50, 260);
-                    ctx.fillText(`Activities: ${activities.join(', ')}`, 400, 100);
-                };
-
-                document.getElementById('launch-button').innerHTML = '<button onclick="launchAnimation()">Launch Simulation</button>';
-
-                // Update planet color
-                planetMaterial.color.set(bookingData.destination.includes("Mars") ? 0xff4500 : 0xaaaaaa);
+                
+                // Starry background
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 100; i++) {
+                    let x = Math.random() * canvas.width;
+                    let y = Math.random() * canvas.height;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                
+                // Title
+                ctx.font = 'bold 40px Orbitron';
+                ctx.fillStyle = '#00bfff';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Space Ticket to ${bookingData.destination}`, canvas.width / 2, 70);
+                
+                // Subtitle
+                ctx.font = '24px Orbitron';
+                ctx.fillText(`${bookingData.missionType} Mission`, canvas.width / 2, 120);
+                
+                // Details
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`Passengers: ${bookingData.passengers}`, 50, 170);
+                ctx.fillText(`Vehicle: ${launchVehicle}`, 50, 210);
+                ctx.fillText(`Launch Year: ${launchYear}`, 50, 250);
+                ctx.fillText(`Transit Time: ${transitTime}`, 50, 290);
+                
+                // Activities with wrapping
+                ctx.textAlign = 'left';
+                let yPos = 170;
+                activities.forEach(activity => {
+                    drawWrappedText(ctx, activity, 400, yPos, 350, 30);
+                    yPos += 60; // Space for up to 2 lines
+                });
             } catch (error) {
                 console.error('Error loading data:', error);
                 document.getElementById('ticket-container').innerHTML = '<p>Error loading trip details. Please try again!</p>';
             }
         });
 
-        // Warp Speed Animation
-        function launchAnimation() {
-            const animationContainer = document.getElementById('animation-container');
-            animationContainer.innerHTML = ''; 
-            const animationRenderer = new THREE.WebGLRenderer({ alpha: true });
-            animationRenderer.setSize(1000, 600);
-            animationContainer.appendChild(animationRenderer.domElement);
-
-            const animationScene = new THREE.Scene();
-            const animationCamera = new THREE.PerspectiveCamera(75, 1000 / 600, 0.1, 1000);
-            animationCamera.position.set(0, 0, 50);
-
-            // Cockpit Frame
-            const cockpitMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-            const cockpitPoints = [
-                new THREE.Vector3(-20, -15, 0),
-                new THREE.Vector3(20, -15, 0),
-                new THREE.Vector3(20, 15, 0),
-                new THREE.Vector3(-20, 15, 0),
-                new THREE.Vector3(-20, -15, 0)
-            ];
-            const cockpitGeometry = new THREE.BufferGeometry().setFromPoints(cockpitPoints);
-            const cockpit = new THREE.Line(cockpitGeometry, cockpitMaterial);
-            animationScene.add(cockpit);
-
-            // Warp Speed Stars
-            const warpStarGeometry = new THREE.BufferGeometry();
-            const warpStarMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
-            const warpStarVertices = [];
-            for (let i = 0; i < 100; i++) {
-                const x = (Math.random() - 0.5) * 100;
-                const y = (Math.random() - 0.5) * 100;
-                const z = -Math.random() * 1000;
-                warpStarVertices.push(x, y, z);
-            }
-            warpStarGeometry.setAttribute('position', new THREE.Float32BufferAttribute(warpStarVertices, 3));
-            const warpStars = new THREE.Points(warpStarGeometry, warpStarMaterial);
-            animationScene.add(warpStars);
-
-            let speed = 0;
-            function animateWarp() {
-                requestAnimationFrame(animateWarp);
-                speed += 0.1;
-                const positions = warpStars.geometry.attributes.position.array;
-                for (let i = 2; i < positions.length; i += 3) {
-                    positions[i] += speed;
-                    if (positions[i] > 0) positions[i] = -1000;
+        // Function to wrap text
+        function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+            let words = text.split(' ');
+            let line = '';
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
                 }
-                warpStars.geometry.attributes.position.needsUpdate = true;
-                animationRenderer.render(animationScene, animationCamera);
             }
-            animateWarp();
+            ctx.fillText(line, x, y);
         }
     </script>
 </body>
