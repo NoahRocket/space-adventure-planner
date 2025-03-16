@@ -36,7 +36,7 @@
         </form>
         
         <div id="ticket-container" class="ticket-container">
-            <canvas id="ticket-canvas" width="400" height="200"></canvas>
+            <canvas id="ticket-canvas" width="800" height="300"></canvas>
         </div>
         <div id="launch-button" class="launch-button"></div>
         <div id="animation-container"></div>
@@ -109,35 +109,34 @@
                 const transitTime = destData.transit_time[Math.floor(Math.random() * destData.transit_time.length)];
                 const activities = destData.activities[bookingData.missionType].sort(() => 0.5 - Math.random()).slice(0, 2);
                 
-                // Draw Ticket
+                // Draw Ticket with Background Image
                 const canvas = document.getElementById('ticket-canvas');
                 const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    console.error('Canvas context is null');
-                    return;
-                }
-                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawing
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = '#00bfff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(0, 0, canvas.width, canvas.height); // Blue border
-                ctx.fillStyle = '#00bfff';
-                ctx.font = 'bold 20px Montserrat';
-                ctx.fillText(`Space Ticket: ${bookingData.destination}`, 20, 30);
-                ctx.font = '16px Montserrat';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(`Mission: ${bookingData.missionType}`, 20, 60);
-                ctx.fillText(`Passengers: ${bookingData.passengers}`, 20, 90);
-                ctx.fillText(`Vehicle: ${launchVehicle}`, 20, 120);
-                ctx.fillText(`Launch: ${launchYear}`, 20, 150);
-                ctx.fillText(`Transit: ${transitTime}`, 20, 180);
-                ctx.fillText(`Activity: ${activities[0]}`, 220, 60);
-                ctx.fillText(`Activity: ${activities[1]}`, 220, 90);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const bgImage = new Image();
+                bgImage.src = bookingData.destination.includes("Mars") ? 'mars-bg.jpg' : 'moon-bg.jpg';
+                bgImage.onload = function() {
+                    ctx.globalAlpha = 0.3;
+                    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+                    ctx.globalAlpha = 1.0;
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#00bfff';
+                    ctx.font = 'bold 40px Montserrat';
+                    ctx.fillText(`Space Ticket: ${bookingData.destination}`, 50, 60);
+                    ctx.font = '24px Montserrat';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(`Mission: ${bookingData.missionType}`, 50, 100);
+                    ctx.fillText(`Passengers: ${bookingData.passengers}`, 50, 140);
+                    ctx.fillText(`Vehicle: ${launchVehicle}`, 50, 180);
+                    ctx.fillText(`Launch: ${launchYear}`, 50, 220);
+                    ctx.fillText(`Transit: ${transitTime}`, 50, 260);
+                    ctx.fillText(`Activities: ${activities.join(', ')}`, 400, 100);
+                };
 
                 document.getElementById('launch-button').innerHTML = '<button onclick="launchAnimation()">Launch Simulation</button>';
 
-                // Update planet color based on destination
+                // Update planet color
                 planetMaterial.color.set(bookingData.destination.includes("Mars") ? 0xff4500 : 0xaaaaaa);
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -145,50 +144,58 @@
             }
         });
 
-        // Spaceship Animation
+        // Warp Speed Animation
         function launchAnimation() {
             const animationContainer = document.getElementById('animation-container');
             animationContainer.innerHTML = ''; 
             const animationRenderer = new THREE.WebGLRenderer({ alpha: true });
-            animationRenderer.setSize(600, 400);
+            animationRenderer.setSize(1000, 600);
             animationContainer.appendChild(animationRenderer.domElement);
 
             const animationScene = new THREE.Scene();
-            const animationCamera = new THREE.PerspectiveCamera(75, 600 / 400, 0.1, 1000);
-            animationCamera.position.set(0, 20, 50);
+            const animationCamera = new THREE.PerspectiveCamera(75, 1000 / 600, 0.1, 1000);
+            animationCamera.position.set(0, 0, 50);
 
-            const spaceshipBody = new THREE.CylinderGeometry(2, 2, 10, 32);
-            const spaceshipMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
-            const spaceship = new THREE.Mesh(spaceshipBody, spaceshipMaterial);
-            spaceship.position.set(-40, 0, 0);
-            animationScene.add(spaceship);
+            // Cockpit Frame
+            const cockpitMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+            const cockpitPoints = [
+                new THREE.Vector3(-20, -15, 0),
+                new THREE.Vector3(20, -15, 0),
+                new THREE.Vector3(20, 15, 0),
+                new THREE.Vector3(-20, 15, 0),
+                new THREE.Vector3(-20, -15, 0)
+            ];
+            const cockpitGeometry = new THREE.BufferGeometry().setFromPoints(cockpitPoints);
+            const cockpit = new THREE.Line(cockpitGeometry, cockpitMaterial);
+            animationScene.add(cockpit);
 
-            const exhaustGeometry = new THREE.ConeGeometry(1, 5, 32);
-            const exhaustMaterial = new THREE.MeshBasicMaterial({ color: 0xff4500 });
-            const exhaust = new THREE.Mesh(exhaustGeometry, exhaustMaterial);
-            exhaust.position.set(0, -5, 0);
-            spaceship.add(exhaust);
+            // Warp Speed Stars
+            const warpStarGeometry = new THREE.BufferGeometry();
+            const warpStarMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+            const warpStarVertices = [];
+            for (let i = 0; i < 100; i++) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = (Math.random() - 0.5) * 100;
+                const z = -Math.random() * 1000;
+                warpStarVertices.push(x, y, z);
+            }
+            warpStarGeometry.setAttribute('position', new THREE.Float32BufferAttribute(warpStarVertices, 3));
+            const warpStars = new THREE.Points(warpStarGeometry, warpStarMaterial);
+            animationScene.add(warpStars);
 
-            const targetPlanet = new THREE.Mesh(planetGeometry, planetMaterial);
-            targetPlanet.position.set(bookingData.destination.includes("Orbit") ? 0 : 40, bookingData.destination.includes("Orbit") ? 20 : 0, 0);
-            animationScene.add(targetPlanet);
-
-            let animationProgress = 0;
-            function animateLaunch() {
-                requestAnimationFrame(animateLaunch);
-                animationProgress += 0.005;
-                if (animationProgress < 1) {
-                    spaceship.position.x = -40 + (80 * animationProgress);
-                    if (bookingData.destination.includes("Orbit")) {
-                        spaceship.position.y = 20 * animationProgress;
-                    }
-                    animationCamera.lookAt(spaceship.position);
+            let speed = 0;
+            function animateWarp() {
+                requestAnimationFrame(animateWarp);
+                speed += 0.1;
+                const positions = warpStars.geometry.attributes.position.array;
+                for (let i = 2; i < positions.length; i += 3) {
+                    positions[i] += speed;
+                    if (positions[i] > 0) positions[i] = -1000;
                 }
+                warpStars.geometry.attributes.position.needsUpdate = true;
                 animationRenderer.render(animationScene, animationCamera);
             }
-            animateLaunch();
-
-            targetPlanet.material.color.set(bookingData.destination.includes("Mars") ? 0xff4500 : 0xaaaaaa);
+            animateWarp();
         }
     </script>
 </body>
