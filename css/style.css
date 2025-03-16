@@ -19,7 +19,7 @@ body {
     z-index: 1;
     text-align: center;
     padding: 50px;
-    max-width: 600px;
+    max-width: 90%;
     margin: 0 auto;
 }
 
@@ -81,7 +81,7 @@ button:hover {
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
     animation: fadeIn 1s ease-in;
-    background-color: #1a1a1a; /* Ensure background is visible */
+    background-color: #1a1a1a;
 }
 
 #animation-container {
